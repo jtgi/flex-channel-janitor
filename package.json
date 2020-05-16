@@ -1,0 +1,22 @@
+{
+    "name": "@jtgi/flex-channel-janitor",
+    "version": "0.1.0",
+    "description": "Clean up unused chat channel in flex",
+    "main": "src/index.js",
+    "bin": {
+        "@jtgi/flex-channel-janitor": "bin/flex-channel-janitor",
+        "flex-channel-janitor": "bin/flex-channel-janitor"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "cli",
+        "flex-channel-janitor"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "esm": "^3.2.25"
+    }
+}
