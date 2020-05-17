@@ -26,7 +26,7 @@ export async function batchProcess(list, promiseFactoryFn, batchSize) {
         try {
             await Promise.all(batch.map(promiseFactoryFn));
         } catch (err) {
-            error('Failed while processing batch. Continuing...', err);
+            warn(`Failed while processing batch. ${err.message} Continuing...`);
         }
 
         i += batchSize;
@@ -34,8 +34,14 @@ export async function batchProcess(list, promiseFactoryFn, batchSize) {
     }
 }
 
+export function warn(msg) {
+    console.warn(`${chalk.yellow.bold('WARN')} ${msg}`)
+    process.exit(1);
+}
+
 export function error(e) {
     console.error(`${chalk.red.bold('FAILED')} ${e.message} \n${e.stack}`)
+    process.exit(1);
 }
 
 export function success(msg) {
