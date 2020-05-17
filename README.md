@@ -2,12 +2,13 @@
 Cleans up any lingering Proxy sessions that have lost their associated tasks.
 
 ## Usage
-Clone and run directly or install via npm.
+1. Get your account credentials from twilio.com/console
+2. Clone and run directly or install via npm.
 
 ### Via NPM
 ```sh
 npm install -g flex-channel-janitor
-flex-channel-janitor --account-sid <Twilio Account Sid> --auth-token <Twilio Auth Token>
+flex-channel-janitor --account-sid $accountSid --auth-token $authToken
 ```
 
 ### Via github
