@@ -109,8 +109,8 @@ async function cleanupChatChannels(status, twlo, orphanedChannelSids, flexChatSe
                 })
             });
 
-            status(`Clean up stale sessions. ${updated} completed`);
             updated++;
+            status(`Clean up stale sessions. ${updated} completed`);
         }
     }, BATCH_SIZE);
 
