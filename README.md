@@ -20,10 +20,6 @@ SUCCESS
 ```sh
 npm install -g flex-channel-janitor
 flex-channel-janitor --account-sid $accountSid --auth-token $authToken
-  ✔ Fetch Flex resources
-  ✔ Find stale chat sessions
-  ✔ Clean up stale sessions (20 completed)
-SUCCESS
 ```
 
 ### Via github
