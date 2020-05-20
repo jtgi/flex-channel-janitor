@@ -7,9 +7,9 @@ Cleans up any lingering Proxy sessions that have lost their associated tasks.
 ```sh
 flex-channel-janitor --account-sid AC46f5800f249d224c431c937528128afb --auth-token 73286632772f1fc262a05fbgaaj6h2de
   ✔ Fetch Flex resources
-  ✔ Find stale chat sessions
-  ✔ Clean up stale sessions (20 completed)
-SUCCESS
+  ✔ Find stale chat sessions. Found 60 candidates
+  ✔ Clean up stale sessions. 60 done
+DONE
 ```
 
 ## Install

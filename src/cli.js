@@ -3,7 +3,7 @@ import cleanup from './cleanup';
 import { success, error } from './util';
 
 export async function cli(args) {
-    let { accountSid, authToken, verbose } = parseArgs();
+    let { accountSid, authToken } = parseArgs();
 
     if (!accountSid || !authToken) {
         console.error('usage: flex-channel-janitor --account-sid $account_sid --auth-token $token')
@@ -11,8 +11,7 @@ export async function cli(args) {
     }
 
     try {
-        let ctx = await cleanup(accountSid, authToken);
-        verbose && ctx.map(console.log);
+        await cleanup(accountSid, authToken);
     } catch (err) {
         error(err);
     }
@@ -24,7 +23,6 @@ function parseArgs(rawArgs) {
     const args = arg({
         '--account-sid': String,
         '--auth-token': String,
-        '--verbose': Boolean,
     });
     
     return {

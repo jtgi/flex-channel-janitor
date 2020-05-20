@@ -49,6 +49,6 @@ export function error(e) {
 }
 
 export function success(msg) {
-    console.log(`${chalk.green.bold('SUCCESS')} ${msg || ''}`); 
+    console.log(`${chalk.green.bold('DONE')} ${msg || ''}`); 
     process.exit(0);
 }

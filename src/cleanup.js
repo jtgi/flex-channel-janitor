@@ -86,7 +86,7 @@ export async function findStaleChatSessions(status, twlo, flexWorkspace, flexPro
         .map(s => s.uniqueName);
 
     const orphanedChannelSids = proxyChannelSids.filter(p => !taskChannelSids.some(t => t === p));
-    status(`Find stale chat sessions. Found ${orphanedChannelSids.length} candidate(s)`);
+    status(`Find stale chat sessions. Found ${orphanedChannelSids.length} candidates`);
 
     return {
         orphanedChannelSids
@@ -95,28 +95,47 @@ export async function findStaleChatSessions(status, twlo, flexWorkspace, flexPro
 
 export async function cleanupChatChannels(status, twlo, orphanedChannelSids, flexChatService) {
     let updated = 0;
+    let skipped = 0;
+    let failed = 0;
     let cleanedUpChannels = [];
+    let errors = [];
+
+    let update = () => {
+        let msg = `Clean up stale sessions. ${updated} done`;
+        msg += skipped > 0 ? `, ${skipped} skipped` : '';
+        msg += failed > 0 ? `, ${failed} failed` : '';
+        status(msg);
+    }
 
     await serially(orphanedChannelSids, async channelSid => {
         const channel = await twlo.chat.services(flexChatService).channels(channelSid).fetch();
         const attrs = JSON.parse(channel.attributes);
 
         if (attrs.status !== 'INACTIVE') {
-            await twlo.chat.services(flexChatService).channels(channelSid).update({
-                attributes: JSON.stringify({
-                    ...attrs,
-                    status: 'INACTIVE'
-                })
-            });
+            try {
+                await twlo.chat.services(flexChatService).channels(channelSid).update({
+                    attributes: JSON.stringify({
+                        ...attrs,
+                        status: 'INACTIVE'
+                    })
+                });
 
-            updated++;
-            cleanedUpChannels.push(channelSid);
-            status(`Clean up stale sessions. ${updated} completed`);
+                updated++;
+                cleanedUpChannels.push(channelSid);
+            } catch (err) {
+                console.error(err);
+                failed++;
+            }
+        } else {
+            skipped++;
         }
+
+        update();
     });
 
     return {
         updated,
-        cleanedUpChannels
+        cleanedUpChannels,
+        errors
     };
 }
