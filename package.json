@@ -1,6 +1,6 @@
 {
     "name": "flex-channel-janitor",
-    "version": "0.1.0",
+    "version": "0.2.1",
     "description": "Clean up unused chat channel in flex",
     "main": "src/index.js",
     "bin": {
