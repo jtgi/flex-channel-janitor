@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+
+const twilio = require('twilio')(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
+const proxySid = process.env.PROXY_SID;
+const chatSid = process.env.CHAT_SID;
+const N = process.env.N;
+
+const main = async () => {
+  for (let i = 0; i < N; i++) {
+    try {
+      const channel = await twilio.chat.services(chatSid).channels.create();
+      const proxy = await twilio.proxy.services(proxySid).sessions.create({ uniqueName: channel.sid });
+      console.log(`chatSid ${channel.sid}, proxySessionSid ${proxy.sid}`);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+}
+
+main().then(() => process.exit(0)).catch(() => process.exit(1));

@@ -1,11 +1,10 @@
 import twilio from 'twilio';
 import Listr from 'listr';
-import { batchProcess, validateSid, getAll, success } from './util';
+import { batchProcess, validateSid, getAll, success, serially } from './util';
 
 const DEFAULT_CHAT_SERVICE = process.env.CHAT_SERVICE || 'Flex Chat Service';
 const DEFAULT_TASKROUTER_WORKSPACE = process.env.TASKROUTER_WORKSPACE || 'Flex Task Assignment';
 const DEFAULT_PROXY_SERVICE = process.env.PROXY_SERVICE || 'Flex Proxy Service';
-const BATCH_SIZE = process.env.BATCH_SIZE || 10;
 
 export default async function cleanup(accountSid, authToken) {
     const twlo = twilio(accountSid, authToken);
@@ -16,9 +15,10 @@ export default async function cleanup(accountSid, authToken) {
         },
         {
             title: 'Find stale chat sessions',
-            task: async ctx => store(
+            task: async (ctx, task) => store(
                 ctx,
                 await findStaleChatSessions(
+                    status => task.title = status,
                     twlo,
                     ctx.flex.flexWorkspace,
                     ctx.flex.flexProxyService
@@ -27,8 +27,8 @@ export default async function cleanup(accountSid, authToken) {
         },
         {
             title: 'Clean up stale sessions',
-            skip: ctx => ctx.flex.orphanedChannelSids.length > 0 ? 'No stale chat sessions found!' : '',
-            task: async ctx => store(
+            skip: ctx => ctx.flex.orphanedChannelSids.length === 0 ? 'No stale chat sessions found!' : false,
+            task: async (ctx, task) => store(
                 ctx,
                 await cleanupChatChannels(
                     status => task.title = status,
@@ -52,7 +52,7 @@ function store(ctx, data) {
     }
 }
 
-async function fetchFlexServices(twlo) {
+export async function fetchFlexServices(twlo) {
     const chatServices = await twlo.chat.services.list();
     const workspaces = await twlo.taskrouter.workspaces.list();
     const proxyServices = await twlo.proxy.services.list();
@@ -72,11 +72,8 @@ async function fetchFlexServices(twlo) {
     };
 }
 
-async function findStaleChatSessions(twlo, flexWorkspace, flexProxyService) {
+export async function findStaleChatSessions(status, twlo, flexWorkspace, flexProxyService) {
     const allTasks = await getAll(twlo.taskrouter.workspaces(flexWorkspace).tasks);
-    if (!allTasks.length) {
-        success('No tasks found. Nothing to do.');
-    }
     const taskChannelSids = allTasks.map(t => JSON.parse(t.attributes).channelSid).filter(sid => !!sid);
 
     const proxySessions = await getAll(twlo.proxy.services(flexProxyService).sessions);
@@ -89,18 +86,21 @@ async function findStaleChatSessions(twlo, flexWorkspace, flexProxyService) {
         .map(s => s.uniqueName);
 
     const orphanedChannelSids = proxyChannelSids.filter(p => !taskChannelSids.some(t => t === p));
+    status(`Find stale chat sessions. Found ${orphanedChannelSids.length} candidate(s)`);
 
     return {
         orphanedChannelSids
     };
 }
 
-async function cleanupChatChannels(status, twlo, orphanedChannelSids, flexChatService) {
+export async function cleanupChatChannels(status, twlo, orphanedChannelSids, flexChatService) {
     let updated = 0;
+    let cleanedUpChannels = [];
 
-    await batchProcess(orphanedChannelSids, async channelSid => {
+    await serially(orphanedChannelSids, async channelSid => {
         const channel = await twlo.chat.services(flexChatService).channels(channelSid).fetch();
         const attrs = JSON.parse(channel.attributes);
+
         if (attrs.status !== 'INACTIVE') {
             await twlo.chat.services(flexChatService).channels(channelSid).update({
                 attributes: JSON.stringify({
@@ -110,11 +110,13 @@ async function cleanupChatChannels(status, twlo, orphanedChannelSids, flexChatSe
             });
 
             updated++;
+            cleanedUpChannels.push(channelSid);
             status(`Clean up stale sessions. ${updated} completed`);
         }
-    }, BATCH_SIZE);
+    });
 
     return {
-        updated
+        updated,
+        cleanedUpChannels
     };
 }

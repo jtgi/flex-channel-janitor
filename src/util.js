@@ -18,6 +18,10 @@ export function validateSid(str, prefix) {
     return new RegExp(`^${prefix}[a-z0-9]{32}$`).test(str);
 }
 
+export async function serially(list, promiseFactoryFn) {
+    return list.reduce((chain, item) => chain.then(() => promiseFactoryFn(item)), Promise.resolve());
+}
+
 export async function batchProcess(list, promiseFactoryFn, batchSize) {
     let i = 0;
     let batch = list.slice(i, i + batchSize);
